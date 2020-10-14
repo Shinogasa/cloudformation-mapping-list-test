@@ -1,0 +1,1 @@
+# cloudformation-mapping-list-test
