@@ -1,0 +1,65 @@
+
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: "ng template"
+
+Parameters:
+  Env:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+
+Conditions:
+  Dev:
+    !Equals [ !Ref Env, "dev" ]
+
+Mappings:
+  KMS:
+    Key:
+      dev1: "arn:aws:kms:ap-northeast-1:awsaccount:key/arn-of-kms-dev-1"
+      dev2: "arn:aws:kms:ap-northeast-1:awsaccount:key/arn-of-kms-dev-2"
+      qa1: "arn:aws:kms:ap-northeast-1:awsaccount:key/arn-of-kms-qa-1"
+      qa2: "arn:aws:kms:ap-northeast-1:awsaccount:key/arn-of-kms-qa-2"
+      prod1: "arn:aws:kms:ap-northeast-1:awsaccount:key/arn-of-kms-prod-1"
+      prod2: "arn:aws:kms:ap-northeast-1:awsaccount:key/arn-of-kms-prod-2"
+
+Resources:
+  PowerAccess:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      ManagedPolicyName: PowerAccess
+      Path: /
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:*
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - s3:*
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+            Resource: 
+              - !If 
+                - Dev
+                - !FindInMap [ KMS, Key, "dev1" ]
+                - !FindInMap [ KMS, Key, "prod1" ]
+              - !If 
+                - Dev
+                - !FindInMap [ KMS, Key, "dev2" ]
+                - !FindInMap [ KMS, Key, "prod2" ]
+              - !If 
+                - Dev
+                - !FindInMap [ KMS, Key, "qa1" ]
+                - !Ref AWS::NoValue
+              - !If 
+                - Dev
+                - !FindInMap [ KMS, Key, "qa2" ]
+                - !Ref AWS::NoValue
